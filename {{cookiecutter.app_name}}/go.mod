@@ -1,7 +1,15 @@
-module github.com/{{cookiecutter.github_username}}/{{cookiecutter.app_name}}
+module {{cookiecutter.source_path}}/{{cookiecutter.app_name}}
 
 require (
-	{% if cookiecutter.use_logrus_logging == "y" -%}github.com/sirupsen/logrus v1.4.1{%- endif %}
-	{% if cookiecutter.use_cobra_cmd == "y" -%}github.com/spf13/cobra v0.0.3{%- endif %}
-	{% if cookiecutter.use_viper_config == "y" -%}github.com/spf13/viper v1.3.2{%- endif %}
+
+	github.com/bufbuild/buf v0.28.0
+	github.com/golang/protobuf v1.4.3
+	github.com/grpc-ecosystem/grpc-gateway/v2 v2.0.1
+	github.com/rakyll/statik v0.1.7
+	github.com/sirupsen/logrus v1.4.1
+	github.com/spf13/viper v1.7.0
+	google.golang.org/genproto v0.0.0-20201021134325-0d71844de594
+	google.golang.org/grpc v1.33.1
+	google.golang.org/grpc/cmd/protoc-gen-go-grpc v1.0.1
+	google.golang.org/protobuf v1.25.0
 )

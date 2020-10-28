@@ -14,15 +14,12 @@ RE_OBJ = re.compile(PATTERN)
 @pytest.fixture
 def context():
     return {
-        'full_name': 'Test Author',
-        'github_username': 'lacion',
+        'source_path': 'github.com/ankurs',
         'app_name': 'MyTestProject',
         'project_short_description': 'A short description of the project.',
         "docker_hub_username": "lacion",
         "docker_image": "lacion/docker-alpine:latest",
         "docker_build_image": "lacion/docker-alpine:gobuildimage",
-        "use_docker": "y",
-        "use_git": "y",
         "use_logrus_logging": "y",
         "use_viper_config": "y"
 }
@@ -59,7 +56,7 @@ def test_default_configuration(cookies, context):
     assert paths
     check_paths(paths)
 
-@pytest.fixture(params=['use_docker', 'use_git', 'use_logrus_logging', 'use_viper_config'])
+@pytest.fixture(params=['use_logrus_logging', 'use_viper_config'])
 def feature_context(request, context):
     context.update({request.param: 'n'})
     return context
