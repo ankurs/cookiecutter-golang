@@ -1,58 +1,26 @@
 package config
 
 import (
-	"time"
-
-	"github.com/spf13/viper"
+	"github.com/kelseyhightower/envconfig"
 )
 
-// Provider defines a set of read-only methods for accessing the application
-// configuration params as defined in one of the config files.
-type Provider interface {
-	ConfigFileUsed() string
-	Get(key string) interface{}
-	GetBool(key string) bool
-	GetDuration(key string) time.Duration
-	GetFloat64(key string) float64
-	GetInt(key string) int
-	GetInt64(key string) int64
-	GetSizeInBytes(key string) uint
-	GetString(key string) string
-	GetStringMap(key string) map[string]interface{}
-	GetStringMapString(key string) map[string]string
-	GetStringMapStringSlice(key string) map[string][]string
-	GetStringSlice(key string) []string
-	GetTime(key string) time.Time
-	InConfig(key string) bool
-	IsSet(key string) bool
-}
+var defaultConfig Config
 
-var defaultConfig *viper.Viper
-
-// Config returns a default config providers
-func Config() Provider {
-	return defaultConfig
-}
-
-// LoadConfigProvider returns a configured viper instance
-func LoadConfigProvider(appName string) Provider {
-	return readViperConfig(appName)
+type Config struct {
+	// App configuration
+	GRPCPort int    `envconfig:"GRPC_PORT" default:"9090"`
+	HTTPPort int    `envconfig:"HTTP_PORT" default:"9091"`
+	AppName  string `envconfig:"APP_NAME" default:"{{cookiecutter.app_name}}"`
+	LogLevel string `envconfig:"LOG_LEVEL" default:"debug"`
+	JSONLogs bool   `envconfig:"JSON_LOGS" default:"true"`
+	Prefix   string `envconfig:"PREFIX" default:"got"`
 }
 
 func init() {
-	defaultConfig = readViperConfig("{{cookiecutter.app_name|upper}}")
+	envconfig.Process("", &defaultConfig)
+	// fail on error
 }
 
-func readViperConfig(appName string) *viper.Viper {
-	v := viper.New()
-	v.SetEnvPrefix(appName)
-	v.AutomaticEnv()
-
-	// global defaults
-	{% if cookiecutter.use_logrus_logging == "y" %}
-	v.SetDefault("json_logs", false)
-	v.SetDefault("loglevel", "debug")
-	{% endif %}
-
-	return v
+func Get() Config {
+	return defaultConfig
 }

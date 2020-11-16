@@ -5,12 +5,15 @@ import (
 	"flag"
 	"fmt"
 	"mime"
+	"net"
 	"net/http"
 	"strings"
 
 	"{{cookiecutter.source_path}}/{{cookiecutter.app_name}}/log"
-	gw "{{cookiecutter.source_path}}/{{cookiecutter.app_name}}/proto"
+	{{cookiecutter.app_name|lower}} "{{cookiecutter.source_path}}/{{cookiecutter.app_name}}/proto"
 	"{{cookiecutter.source_path}}/{{cookiecutter.app_name}}/version"
+	"{{cookiecutter.source_path}}/{{cookiecutter.app_name}}/service"
+	"{{cookiecutter.source_path}}/{{cookiecutter.app_name}}/config"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/rakyll/statik/fs"
 	"google.golang.org/grpc"
@@ -37,7 +40,7 @@ var (
 	grpcServerEndpoint = flag.String("grpc-server-endpoint", "localhost:9090", "gRPC server endpoint")
 )
 
-func run() error {
+func runHTTP() error {
 	ctx := context.Background()
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
@@ -46,14 +49,13 @@ func run() error {
 	// Note: Make sure the gRPC server is running properly and accessible
 	mux := runtime.NewServeMux()
 	opts := []grpc.DialOption{grpc.WithInsecure()}
-	err := gw.Register{{cookiecutter.service_name}}ServiceHandlerFromEndpoint(ctx, mux,  *grpcServerEndpoint, opts)
+	err := {{cookiecutter.app_name|lower}}.Register{{cookiecutter.service_name}}ServiceHandlerFromEndpoint(ctx, mux,  *grpcServerEndpoint, opts)
 	if err != nil {
 		return err
 	}
 
-	log.Info("Starting grpc server on", *grpcServerEndpoint)
 	// Start HTTP server (and proxy calls to gRPC server endpoint)
-	gatewayAddr := "0.0.0.0:8081"
+	gatewayAddr := fmt.Sprintf("0.0.0.0:%d", config.Get().HTTPPort)
 	gwServer := &http.Server{
 		Addr: gatewayAddr,
 		Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -64,9 +66,39 @@ func run() error {
 			mux.ServeHTTP(w, r)
 		}),
 	}
+	log.Info("Starting HTTP server on ", gatewayAddr)
 	return gwServer.ListenAndServe()
 
 }
+
+func runGRPC() error {
+	grpcServerEndpoint := fmt.Sprintf("0.0.0.0:%d", config.Get().GRPCPort)
+	lis, err := net.Listen("tcp", grpcServerEndpoint)
+	if err != nil {
+		return fmt.Errorf("failed to listen: %v", err)
+	}
+	opts := []grpc.ServerOption{}
+/*
+	if *tls {
+		if *certFile == "" {
+			*certFile = data.Path("x509/server_cert.pem")
+		}
+		if *keyFile == "" {
+			*keyFile = data.Path("x509/server_key.pem")
+		}
+		creds, err := credentials.NewServerTLSFromFile(*certFile, *keyFile)
+		if err != nil {
+			log.Fatalf("Failed to generate credentials %v", err)
+		}
+		opts = append(opts, grpc.Creds(creds))
+	}
+	*/
+	log.Info("Starting GRPC server on ", grpcServerEndpoint)
+	grpcServer := grpc.NewServer(opts...)
+	{{cookiecutter.app_name|lower}}.Register{{cookiecutter.service_name}}ServiceServer(grpcServer, service.New())
+	return grpcServer.Serve(lis)
+}
+
 func main() {
 
 	versionFlag := flag.Bool("version", false, "Version")
@@ -80,5 +112,13 @@ func main() {
 		fmt.Println("OS / Arch:", version.OsArch)
 		return
 	}
-	log.Error(run())
+
+	errChan := make(chan error, 0)
+	go func() {
+		errChan <- runHTTP()
+	}()
+	go func() {
+		errChan <- runGRPC()
+	}()
+	log.Error(<-errChan)
 }

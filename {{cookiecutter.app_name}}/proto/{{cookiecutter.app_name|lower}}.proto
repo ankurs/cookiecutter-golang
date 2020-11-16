@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package {{cookiecutter.grpc_package}}.v1;
 
-option go_package = "{{cookiecutter.source_path}}/{{cookiecutter.app_name}}/proto;{{cookiecutter.grpc_package|lower|replace('.', '_')}}";
+option go_package = "{{cookiecutter.source_path}}/{{cookiecutter.app_name}}/proto;{{cookiecutter.app_name|lower|replace('.', '_')}}";
 
 import "google/api/annotations.proto";
 import "protoc-gen-openapiv2/options/annotations.proto";

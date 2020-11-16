@@ -19,9 +19,7 @@ def context():
         'project_short_description': 'A short description of the project.',
         "docker_hub_username": "lacion",
         "docker_image": "lacion/docker-alpine:latest",
-        "docker_build_image": "lacion/docker-alpine:gobuildimage",
-        "use_logrus_logging": "y",
-        "use_viper_config": "y"
+        "docker_build_image": "golang:gobuildimage",
 }
 
 def build_files_list(root_dir):
@@ -55,11 +53,6 @@ def test_default_configuration(cookies, context):
     paths = build_files_list(str(result.project))
     assert paths
     check_paths(paths)
-
-@pytest.fixture(params=['use_logrus_logging', 'use_viper_config'])
-def feature_context(request, context):
-    context.update({request.param: 'n'})
-    return context
 
 def test_disable_features(cookies, feature_context):
     result = cookies.bake(extra_context=feature_context)

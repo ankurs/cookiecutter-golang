@@ -5,6 +5,7 @@ require (
 	github.com/bufbuild/buf v0.28.0
 	github.com/golang/protobuf v1.4.3
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.0.1
+	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/rakyll/statik v0.1.7
 	github.com/sirupsen/logrus v1.4.1
 	github.com/spf13/viper v1.7.0
