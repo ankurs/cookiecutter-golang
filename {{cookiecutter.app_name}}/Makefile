@@ -15,13 +15,9 @@ help:
 	@echo
 	@echo 'Usage:'
 	@echo '    make build           Compile the project.'
-	@echo '    make get-deps        runs dep ensure, mostly used for ci.'
-	@echo '    make build-alpine    Compile optimized for alpine linux.'
-	@echo '    make package         Build final docker image with just the go binary inside'
-	@echo '    make tag             Tag image created by package with latest, git commit and version'
 	@echo '    make test            Run tests on a compiled project.'
-	@echo '    make push            Push tagged images to registry'
 	@echo '    make clean           Clean the directory tree.'
+	@echo '    make dep             Update dependencies.'
 	@echo
 
 build:
@@ -41,21 +37,6 @@ install:
 		github.com/rakyll/statik \
 		github.com/bufbuild/buf/cmd/buf
 
-proto:
-	protoc -I . \
-	-I$(GOPATH)/src/github.com/grpc-ecosystem/grpc-gateway/third_party/googleapis \
-   --go_out ./gen/go/ --go_opt paths=source_relative \
-   --go-grpc_out ./gen/go/ --go-grpc_opt paths=source_relative \
-   proto/{{cookiecutter.app_name}}.proto
-	protoc -I . --grpc-gateway_out ./gen/go \
-	-I$(GOPATH)/src/github.com/grpc-ecosystem/grpc-gateway/third_party/googleapis \
-     --grpc-gateway_opt logtostderr=true \
-     --grpc-gateway_opt paths=source_relative \
-     --grpc-gateway_opt generate_unbound_methods=true \
-     proto/{{cookiecutter.app_name}}.proto
-	protoc -I . -I$(GOPATH)/src/github.com/grpc-ecosystem/grpc-gateway/third_party/googleapis\
-		--openapiv2_out ./gen/openapiv2 --openapiv2_opt logtostderr=true proto/{{cookiecutter.app_name}}.proto
-
 generate:
 	buf generate --file ./proto/{{cookiecutter.app_name}}.proto
 	# Generate static assets for OpenAPI UI
@@ -63,7 +44,10 @@ generate:
 
 clean:
 	@test ! -e bin/${BIN_NAME} || rm bin/${BIN_NAME}
+	go clean ./...
 
 test:
 	go test ./...
 
+run: build
+	./bin/${BIN_NAME}

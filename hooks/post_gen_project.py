@@ -26,6 +26,7 @@ def init_git():
     Initialises git on the new project folder
     """
     GIT_COMMANDS = [
+        ["go", "fmt"],
         ["git", "init"],
         ["git", "add", "."],
         ["git", "commit", "-a", "-m", "Initial Commit."]
@@ -53,5 +54,5 @@ def remove_docker_files():
             PROJECT_DIRECTORY, filename
         ))
 
-#init_proto()
+init_proto()
 init_git()

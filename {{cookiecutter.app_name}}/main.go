@@ -34,12 +34,6 @@ func getOpenAPIHandler() http.Handler {
 	return http.FileServer(statikFS)
 }
 
-var (
-	// command-line options:
-	// gRPC server endpoint
-	grpcServerEndpoint = flag.String("grpc-server-endpoint", "localhost:9090", "gRPC server endpoint")
-)
-
 func runHTTP() error {
 	ctx := context.Background()
 	ctx, cancel := context.WithCancel(ctx)
@@ -47,9 +41,10 @@ func runHTTP() error {
 
 	// Register gRPC server endpoint
 	// Note: Make sure the gRPC server is running properly and accessible
+	grpcServerEndpoint := fmt.Sprintf("0.0.0.0:%d", config.Get().GRPCPort)
 	mux := runtime.NewServeMux()
 	opts := []grpc.DialOption{grpc.WithInsecure()}
-	err := {{cookiecutter.app_name|lower}}.Register{{cookiecutter.service_name}}ServiceHandlerFromEndpoint(ctx, mux,  *grpcServerEndpoint, opts)
+	err := {{cookiecutter.app_name|lower}}.Register{{cookiecutter.service_name}}HandlerFromEndpoint(ctx, mux, grpcServerEndpoint, opts)
 	if err != nil {
 		return err
 	}
@@ -60,6 +55,7 @@ func runHTTP() error {
 		Addr: gatewayAddr,
 		Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			if strings.HasPrefix(r.URL.Path, "/swagger/") {
+				w.
 				http.StripPrefix("/swagger/", getOpenAPIHandler()).ServeHTTP(w, r)
 				return
 			}
@@ -78,7 +74,7 @@ func runGRPC() error {
 		return fmt.Errorf("failed to listen: %v", err)
 	}
 	opts := []grpc.ServerOption{}
-/*
+	/*
 	if *tls {
 		if *certFile == "" {
 			*certFile = data.Path("x509/server_cert.pem")
@@ -95,7 +91,7 @@ func runGRPC() error {
 	*/
 	log.Info("Starting GRPC server on ", grpcServerEndpoint)
 	grpcServer := grpc.NewServer(opts...)
-	{{cookiecutter.app_name|lower}}.Register{{cookiecutter.service_name}}ServiceServer(grpcServer, service.New())
+	{{cookiecutter.app_name|lower}}.Register{{cookiecutter.service_name}}Server(grpcServer, service.New(config.Get()))
 	return grpcServer.Serve(lis)
 }
 

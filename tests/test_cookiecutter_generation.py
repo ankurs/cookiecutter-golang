@@ -17,7 +17,6 @@ def context():
         'source_path': 'github.com/ankurs',
         'app_name': 'MyTestProject',
         'project_short_description': 'A short description of the project.',
-        "docker_hub_username": "lacion",
         "docker_image": "lacion/docker-alpine:latest",
         "docker_build_image": "golang:gobuildimage",
 }

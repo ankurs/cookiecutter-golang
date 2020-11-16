@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package {{cookiecutter.grpc_package}}.v1;
+package {{cookiecutter.grpc_package}};
 
 option go_package = "{{cookiecutter.source_path}}/{{cookiecutter.app_name}}/proto;{{cookiecutter.app_name|lower|replace('.', '_')}}";
 
@@ -27,7 +27,7 @@ message EchoResponse{
   string msg = 1;
 }
 
-service {{cookiecutter.service_name}}Service {
+service {{cookiecutter.service_name}} {
   rpc Echo(EchoRequest) returns (EchoResponse) {
     option (google.api.http) = {
       post: "/api/v1/example/echo"

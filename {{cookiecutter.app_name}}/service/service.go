@@ -19,9 +19,9 @@ func (s *svc) Echo(_ context.Context, req *{{cookiecutter.app_name|lower}}.EchoR
 }
 
 // Creates a new Service
-func New() {{cookiecutter.app_name|lower}}.{{cookiecutter.service_name}}ServiceServer {
+func New(cfg config.Config) {{cookiecutter.app_name|lower}}.{{cookiecutter.service_name}}Server {
 
 	return &svc{
-		prefix: config.Get().Prefix,
+		prefix: cfg.Prefix,
 	}
 }
