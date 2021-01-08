@@ -5,25 +5,36 @@ import (
 	"flag"
 	"fmt"
 	"mime"
-	"net"
 	"net/http"
-	"strings"
 
-	"{{cookiecutter.source_path}}/{{cookiecutter.app_name}}/log"
-	{{cookiecutter.app_name|lower}} "{{cookiecutter.source_path}}/{{cookiecutter.app_name}}/proto"
-	"{{cookiecutter.source_path}}/{{cookiecutter.app_name}}/version"
-	"{{cookiecutter.source_path}}/{{cookiecutter.app_name}}/service"
-	"{{cookiecutter.source_path}}/{{cookiecutter.app_name}}/config"
+	"github.com/ankurs/ExampleProject/config"
+	"github.com/ankurs/ExampleProject/log"
+	exampleproject "github.com/ankurs/ExampleProject/proto"
+	"github.com/ankurs/ExampleProject/service"
+	"github.com/ankurs/ExampleProject/version"
+	"github.com/go-coldbrew/core"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/rakyll/statik/fs"
 	"google.golang.org/grpc"
 
-	_ "{{cookiecutter.source_path}}/{{cookiecutter.app_name}}/statik"
+	_ "github.com/ankurs/ExampleProject/statik"
 )
 
-// getOpenAPIHandler serves an OpenAPI UI.
-// Adapted from https://github.com/philips/grpc-gateway-example/blob/a269bcb5931ca92be0ceae6130ac27ae89582ecc/cmd/serve.go#L63
-func getOpenAPIHandler() http.Handler {
+type svc struct {
+}
+
+func (s *svc) InitHTTP(ctx context.Context, mux *runtime.ServeMux, endpoint string, opts []grpc.DialOption) error {
+	return {{cookiecutter.app_name|lower}}.Register{{cookiecutter.service_name}}HandlerFromEndpoint(ctx, mux, endpoint, opts)
+}
+
+func (s *svc) InitGRPC(ctx context.Context, server *grpc.Server) error {
+	{{cookiecutter.app_name|lower}}.Register{{cookiecutter.service_name}}Server(server, service.New(config.Get()))
+	return nil
+}
+
+func (s *svc) GetOpenAPIHandler(ctx context.Context) http.Handler {
+	// getOpenAPIHandler serves an OpenAPI UI.
+	// Adapted from https://github.com/philips/grpc-gateway-example/blob/a269bcb5931ca92be0ceae6130ac27ae89582ecc/cmd/serve.go#L63
 	mime.AddExtensionType(".svg", "image/svg+xml")
 
 	statikFS, err := fs.New()
@@ -32,66 +43,6 @@ func getOpenAPIHandler() http.Handler {
 	}
 
 	return http.FileServer(statikFS)
-}
-
-func runHTTP() error {
-	ctx := context.Background()
-	ctx, cancel := context.WithCancel(ctx)
-	defer cancel()
-
-	// Register gRPC server endpoint
-	// Note: Make sure the gRPC server is running properly and accessible
-	grpcServerEndpoint := fmt.Sprintf("0.0.0.0:%d", config.Get().GRPCPort)
-	mux := runtime.NewServeMux()
-	opts := []grpc.DialOption{grpc.WithInsecure()}
-	err := {{cookiecutter.app_name|lower}}.Register{{cookiecutter.service_name}}HandlerFromEndpoint(ctx, mux, grpcServerEndpoint, opts)
-	if err != nil {
-		return err
-	}
-
-	// Start HTTP server (and proxy calls to gRPC server endpoint)
-	gatewayAddr := fmt.Sprintf("0.0.0.0:%d", config.Get().HTTPPort)
-	gwServer := &http.Server{
-		Addr: gatewayAddr,
-		Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			if strings.HasPrefix(r.URL.Path, "/swagger/") {
-				http.StripPrefix("/swagger/", getOpenAPIHandler()).ServeHTTP(w, r)
-				return
-			}
-			mux.ServeHTTP(w, r)
-		}),
-	}
-	log.Info("Starting HTTP server on ", gatewayAddr)
-	return gwServer.ListenAndServe()
-
-}
-
-func runGRPC() error {
-	grpcServerEndpoint := fmt.Sprintf("0.0.0.0:%d", config.Get().GRPCPort)
-	lis, err := net.Listen("tcp", grpcServerEndpoint)
-	if err != nil {
-		return fmt.Errorf("failed to listen: %v", err)
-	}
-	opts := []grpc.ServerOption{}
-	/*
-	if *tls {
-		if *certFile == "" {
-			*certFile = data.Path("x509/server_cert.pem")
-		}
-		if *keyFile == "" {
-			*keyFile = data.Path("x509/server_key.pem")
-		}
-		creds, err := credentials.NewServerTLSFromFile(*certFile, *keyFile)
-		if err != nil {
-			log.Fatalf("Failed to generate credentials %v", err)
-		}
-		opts = append(opts, grpc.Creds(creds))
-	}
-	*/
-	log.Info("Starting GRPC server on ", grpcServerEndpoint)
-	grpcServer := grpc.NewServer(opts...)
-	{{cookiecutter.app_name|lower}}.Register{{cookiecutter.service_name}}Server(grpcServer, service.New(config.Get()))
-	return grpcServer.Serve(lis)
 }
 
 func main() {
@@ -108,12 +59,9 @@ func main() {
 		return
 	}
 
-	errChan := make(chan error, 0)
-	go func() {
-		errChan <- runHTTP()
-	}()
-	go func() {
-		errChan <- runGRPC()
-	}()
-	log.Error(<-errChan)
+	cb := core.New(config.GetColdBrewConfig())
+
+	cb.SetService(&svc{})
+
+	log.Error(cb.Run())
 }

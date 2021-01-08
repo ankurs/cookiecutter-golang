@@ -1,19 +1,16 @@
 package config
 
 import (
+	cbConfig "github.com/go-coldbrew/core/config"
 	"github.com/kelseyhightower/envconfig"
 )
 
 var defaultConfig Config
 
 type Config struct {
+	cbConfig.Config
 	// App configuration
-	GRPCPort int    `envconfig:"GRPC_PORT" default:"9090"`
-	HTTPPort int    `envconfig:"HTTP_PORT" default:"9091"`
-	AppName  string `envconfig:"APP_NAME" default:"{{cookiecutter.app_name}}"`
-	LogLevel string `envconfig:"LOG_LEVEL" default:"debug"`
-	JSONLogs bool   `envconfig:"JSON_LOGS" default:"true"`
-	Prefix   string `envconfig:"PREFIX" default:"got"`
+	Prefix string `envconfig:"PREFIX" default:"got"`
 }
 
 func init() {
@@ -23,4 +20,8 @@ func init() {
 
 func Get() Config {
 	return defaultConfig
+}
+
+func GetColdBrewConfig() cbConfig.Config {
+	return defaultConfig.Config
 }
