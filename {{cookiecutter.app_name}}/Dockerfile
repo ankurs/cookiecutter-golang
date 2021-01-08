@@ -35,6 +35,4 @@ RUN chmod +x /opt/{{cookiecutter.app_name}}/bin/{{cookiecutter.app_name}}
 RUN adduser -D -g '' {{cookiecutter.app_name}}
 USER {{cookiecutter.app_name}}
 
-ENTRYPOINT ["/usr/bin/dumb-init", "--"]
-
-CMD ["/opt/{{cookiecutter.app_name}}/bin/{{cookiecutter.app_name}}"]
+ENTRYPOINT ["/opt/{{cookiecutter.app_name}}/bin/{{cookiecutter.app_name}}"]

@@ -4,7 +4,7 @@
     "grpc_package": "github.com.ankurs",
     "service_name": "ExampleProject",
     "project_short_description": "A Golang project.",
-    "docker_image": "lacion/alpine-base-image:latest",
+    "docker_image": "alpine:latest",
     "docker_build_image": "golang",
     "docker_build_image_version": ["1.15", "1.16"],
     "_copy_without_render": [
