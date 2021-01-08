@@ -55,7 +55,6 @@ func runHTTP() error {
 		Addr: gatewayAddr,
 		Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			if strings.HasPrefix(r.URL.Path, "/swagger/") {
-				w.
 				http.StripPrefix("/swagger/", getOpenAPIHandler()).ServeHTTP(w, r)
 				return
 			}
